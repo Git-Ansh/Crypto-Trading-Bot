@@ -22,6 +22,12 @@ mongoose.connect(process.env.MONGO_URI, {
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
+// Import Routes
+const authRoutes = require('./routes/auth');
+
+// Use Routes
+app.use('/api/auth', authRoutes);
+
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Welcome to the Crypto Trading Bot API');
