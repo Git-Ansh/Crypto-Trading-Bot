@@ -1,5 +1,6 @@
 // src/App.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import axiosInstance, { getCsrfToken } from './axiosConfig';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -9,6 +10,11 @@ import Navbar from './components/common/Navbar';
 import Footer from './components/common/Footer';
 
 function App() {
+  useEffect(() => {
+    // Fetch CSRF token on mount
+    getCsrfToken();
+  }, []);
+
   return (
     <Router>
       <Navbar />

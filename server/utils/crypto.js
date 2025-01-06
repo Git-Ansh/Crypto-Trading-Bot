@@ -3,15 +3,26 @@ const crypto = require('crypto');
 
 // We'll assume AES-256-GCM
 const algorithm = 'aes-256-gcm';
-// Must be 32 bytes (256 bits)
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; 
-// For demonstration, IV can be 12 or 16 bytes; we often generate it randomly each time
-// We'll choose 12 bytes for GCM
+
+// Must be 32 bytes (256 bits) - convert from hex
+const ENCRYPTION_KEY_HEX = process.env.ENCRYPTION_KEY; 
+
+// For demonstration, IV can be 12 bytes for GCM
 const IV_LENGTH = 12;
 
-if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
-  throw new Error('ENCRYPTION_KEY must be 32 bytes long');
+// Validate ENCRYPTION_KEY existence
+if (!ENCRYPTION_KEY_HEX) {
+  throw new Error('ENCRYPTION_KEY not found');
 }
+
+// Validate ENCRYPTION_KEY format
+const hexRegex = /^[0-9a-fA-F]+$/;
+if (ENCRYPTION_KEY_HEX.length !== 64 || !hexRegex.test(ENCRYPTION_KEY_HEX)) {
+  throw new Error('ENCRYPTION_KEY must be a 64-character hexadecimal string (32 bytes)');
+}
+
+// Convert ENCRYPTION_KEY to Buffer
+const ENCRYPTION_KEY = Buffer.from(ENCRYPTION_KEY_HEX, 'hex');
 
 // We create these helper functions:
 function encrypt(text) {

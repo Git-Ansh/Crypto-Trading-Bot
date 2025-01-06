@@ -4,13 +4,21 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
+const crypto = require('crypto');
+
+// Apply rate limiting to authentication routes
+//router.use('/login', rateLimiter);
+//router.use('/register', rateLimiter);
 
 // Models
 const User = require('../models/User');
-const RefreshToken = require('../models/RefreshToken');
+const RefreshToken = require('../models/RefreshTokens');
 
-// AES-256 utility (replace with your own path if different)
+// AES-256 utility
 const { encrypt, decrypt } = require('../utils/crypto');
+
+// Custom Error Class
+const CustomError = require('../utils/CustomError');
 
 // Constants
 const REFRESH_TOKEN_EXPIRY_DAYS = 7; // how many days refresh tokens last
@@ -18,7 +26,6 @@ const REFRESH_TOKEN_EXPIRY_DAYS = 7; // how many days refresh tokens last
 /**
  * Utility to create a random token string for refresh tokens
  */
-const crypto = require('crypto');
 function generateRefreshTokenString() {
   return crypto.randomBytes(32).toString('hex');
 }
@@ -31,11 +38,12 @@ router.post(
     check('email', 'Please include a valid email').isEmail(),
     check('password', 'Password must be 6 or more characters').isLength({ min: 6 }),
   ],
-  async (req, res) => {
+  async (req, res, next) => {
     // Validate request body
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      // Pass validation errors to error handler
+      return next(new CustomError('Validation failed', 400));
     }
 
     try {
@@ -44,7 +52,7 @@ router.post(
       // Check if user already exists
       const existingUser = await User.findOne({ email });
       if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
+        throw new CustomError('User already exists', 400);
       }
 
       // Hash the password
@@ -62,27 +70,35 @@ router.post(
 
       res.status(201).json({ message: 'User registered successfully' });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+      // If the error is not a CustomError, convert it to one
+      if (!(error instanceof CustomError)) {
+        return next(new CustomError('Server error', 500));
+      }
+      next(error); // Pass the error to the error handler
     }
   }
 );
 
 // ============== LOGIN ROUTE ==============
-router.post('/login', async (req, res) => {
+router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
+    // Validate presence of email and password
+    if (!email || !password) {
+      throw new CustomError('Email and password are required', 400);
+    }
 
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      throw new CustomError('Invalid credentials', 400);
     }
 
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      throw new CustomError('Invalid credentials', 400);
     }
 
     // Create short-lived JWT Access Token
@@ -118,8 +134,11 @@ router.post('/login', async (req, res) => {
       refreshToken: rawRefresh,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    // If the error is not a CustomError, convert it to one
+    if (!(error instanceof CustomError)) {
+      return next(new CustomError('Server error', 500));
+    }
+    next(error); // Pass the error to the error handler
   }
 });
 
@@ -129,11 +148,11 @@ router.post('/login', async (req, res) => {
  * We encrypt it, compare with DB, and if valid + not expired,
  * we issue a new access token. Optionally we rotate the refresh token.
  */
-router.post('/refresh', async (req, res) => {
+router.post('/refresh', async (req, res, next) => {
   try {
     const { refreshToken: rawRefresh } = req.body;
     if (!rawRefresh) {
-      return res.status(400).json({ message: 'Missing refresh token' });
+      throw new CustomError('Missing refresh token', 400);
     }
 
     // Encrypt the incoming token to compare with DB
@@ -142,14 +161,14 @@ router.post('/refresh', async (req, res) => {
     // Find the refresh token doc
     const stored = await RefreshToken.findOne({ token: encryptedRefresh });
     if (!stored) {
-      return res.status(403).json({ message: 'Invalid refresh token' });
+      throw new CustomError('Invalid refresh token', 403);
     }
 
     // Check expiry
     if (stored.expiresAt < new Date()) {
-      // Token expired
-      await RefreshToken.deleteOne({ _id: stored._id }); // or you can do stored.remove()
-      return res.status(403).json({ message: 'Refresh token expired' });
+      // Token expired, remove it from DB
+      await RefreshToken.deleteOne({ _id: stored._id });
+      throw new CustomError('Refresh token expired', 403);
     }
 
     // The refresh token is valid; create a new Access Token
@@ -165,7 +184,6 @@ router.post('/refresh', async (req, res) => {
     newExpiry.setDate(newExpiry.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
 
     stored.token = newEncrypted;
-    stored.createdAt = new Date();
     stored.expiresAt = newExpiry;
     await stored.save();
 
@@ -174,7 +192,7 @@ router.post('/refresh', async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
+      maxAge: 15 * 60 * 1000, // 15 minutes
     });
 
     // Return the new plaintext refresh token + success message
@@ -183,8 +201,11 @@ router.post('/refresh', async (req, res) => {
       refreshToken: newRawRefresh,
     });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    // If the error is not a CustomError, convert it to one
+    if (!(error instanceof CustomError)) {
+      return next(new CustomError('Server error', 500));
+    }
+    next(error); // Pass the error to the error handler
   }
 });
 
@@ -193,9 +214,9 @@ router.post('/refresh', async (req, res) => {
  * Clears the access token cookie and also
  * invalidates the refresh token (if provided).
  */
-router.post('/logout', async (req, res) => {
+router.post('/logout', async (req, res, next) => {
   try {
-    // Clear the access token
+    // Clear the access token cookie
     res.clearCookie('token', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -211,8 +232,11 @@ router.post('/logout', async (req, res) => {
 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    // If the error is not a CustomError, convert it to one
+    if (!(error instanceof CustomError)) {
+      return next(new CustomError('Server error', 500));
+    }
+    next(error); // Pass the error to the error handler
   }
 });
 
