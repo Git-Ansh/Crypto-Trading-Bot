@@ -115,8 +115,8 @@ router.post('/login', async (req, res, next) => {
 
     // Store encrypted refresh token in DB
     await RefreshToken.create({
-      user: user._id,
-      token: encryptedRefresh,
+      userId: user._id,
+      encryptedToken: encryptedRefresh,
       expiresAt: expiry,
     });
 
@@ -131,9 +131,11 @@ router.post('/login', async (req, res, next) => {
     // Return plaintext refresh token (only once!)
     res.json({
       message: 'Logged in successfully',
+      accessToken,
       refreshToken: rawRefresh,
     });
   } catch (error) {
+    console.log(error);
     // If the error is not a CustomError, convert it to one
     if (!(error instanceof CustomError)) {
       return next(new CustomError('Server error', 500));
