@@ -101,6 +101,9 @@ router.post('/login', async (req, res, next) => {
       throw new CustomError('Invalid credentials', 400);
     }
 
+    // Optional: Invalidate existing refresh tokens for the user
+    await RefreshToken.deleteMany({ userId: user._id });
+
     // Create short-lived JWT Access Token
     const accessPayload = { user: { id: user.id } };
     const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET, { expiresIn: '15m' });
