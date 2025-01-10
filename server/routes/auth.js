@@ -6,22 +6,16 @@ const jwt = require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 const crypto = require('crypto');
 
-// Apply rate limiting to authentication routes
-//router.use('/login', rateLimiter);
-//router.use('/register', rateLimiter);
-
 // Models
-const User = require('../models/User');
+const User = require('../models/user');
 const RefreshToken = require('../models/RefreshTokens');
 
-// AES-256 utility
+// Utilities
 const { encrypt, decrypt } = require('../utils/crypto');
-
-// Custom Error Class
 const CustomError = require('../utils/CustomError');
 
 // Constants
-const REFRESH_TOKEN_EXPIRY_DAYS = 7; // how many days refresh tokens last
+const REFRESH_TOKEN_EXPIRY_DAYS = 7;
 
 /**
  * Utility to create a random token string for refresh tokens
@@ -80,169 +74,80 @@ router.post(
 );
 
 // ============== LOGIN ROUTE ==============
-router.post('/login', async (req, res, next) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate presence of email and password
-    if (!email || !password) {
-      throw new CustomError('Email and password are required', 400);
+router.post(
+  '/login',
+  [
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Password is required').exists(),
+  ],
+  async (req, res, next) => {
+    // Validate request body
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(new CustomError('Validation failed', 400));
     }
 
-    // Check if user exists
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new CustomError('Invalid credentials', 400);
-    }
+    try {
+      const { email, password } = req.body;
 
-    // Compare passwords
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      throw new CustomError('Invalid credentials', 400);
-    }
+      // Check if user exists
+      const user = await User.findOne({ email });
+      if (!user) {
+        throw new CustomError('Invalid credentials', 400);
+      }
 
-    // Optional: Invalidate existing refresh tokens for the user
-    await RefreshToken.deleteMany({ userId: user._id });
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        throw new CustomError('Invalid credentials', 400);
+      }
 
-    // Create short-lived JWT Access Token
-    const accessPayload = { user: { id: user.id } };
-    const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET, { expiresIn: '15m' });
+      // Invalidate existing refresh tokens for the user
+      await RefreshToken.deleteMany({ userId: user._id });
 
-    // Generate and encrypt a refresh token
-    const rawRefresh = generateRefreshTokenString();
-    const encryptedRefresh = encrypt(rawRefresh);
+      // Create short-lived JWT Access Token
+      const accessPayload = { user: { id: user.id } };
+      const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-    // Calculate refresh token expiry
-    const expiry = new Date();
-    expiry.setDate(expiry.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
-
-    // Store encrypted refresh token in DB
-    await RefreshToken.create({
-      userId: user._id,
-      encryptedToken: encryptedRefresh,
-      expiresAt: expiry,
-    });
-
-    // Set the access token in an HttpOnly cookie
-    res.cookie('token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes in ms
-    });
-
-    // Return plaintext refresh token (only once!)
-    res.json({
-      message: 'Logged in successfully',
-      accessToken,
-      refreshToken: rawRefresh,
-    });
-  } catch (error) {
-    console.log(error);
-    // If the error is not a CustomError, convert it to one
-    if (!(error instanceof CustomError)) {
-      return next(new CustomError('Server error', 500));
-    }
-    next(error); // Pass the error to the error handler
-  }
-});
-
-// ============== REFRESH ROUTE ==============
-/**
- * Client sends their plaintext refresh token in the body.
- * We encrypt it, compare with DB, and if valid + not expired,
- * we issue a new access token. Optionally we rotate the refresh token.
- */
-router.post('/refresh', async (req, res, next) => {
-  try {
-    const { refreshToken: rawRefresh } = req.body;
-    if (!rawRefresh) {
-      throw new CustomError('Missing refresh token', 400);
-    }
-
-    // Encrypt the incoming token to compare with DB
-    const encryptedRefresh = encrypt(rawRefresh);
-
-    // Find the refresh token doc
-    const stored = await RefreshToken.findOne({ token: encryptedRefresh });
-    if (!stored) {
-      throw new CustomError('Invalid refresh token', 403);
-    }
-
-    // Check expiry
-    if (stored.expiresAt < new Date()) {
-      // Token expired, remove it from DB
-      await RefreshToken.deleteOne({ _id: stored._id });
-      throw new CustomError('Refresh token expired', 403);
-    }
-
-    // The refresh token is valid; create a new Access Token
-    const newAccessPayload = { user: { id: stored.user } };
-    const newAccessToken = jwt.sign(newAccessPayload, process.env.JWT_SECRET, { expiresIn: '15m' });
-
-    // OPTIONAL: Rotate (generate a new) refresh token to prevent replay
-    const newRawRefresh = generateRefreshTokenString();
-    const newEncrypted = encrypt(newRawRefresh);
-
-    // Update DB record with new encrypted token + new expiry
-    const newExpiry = new Date();
-    newExpiry.setDate(newExpiry.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
-
-    stored.token = newEncrypted;
-    stored.expiresAt = newExpiry;
-    await stored.save();
-
-    // Update the access token cookie
-    res.cookie('token', newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 minutes
-    });
-
-    // Return the new plaintext refresh token + success message
-    res.json({
-      message: 'Refresh successful',
-      refreshToken: newRawRefresh,
-    });
-  } catch (error) {
-    // If the error is not a CustomError, convert it to one
-    if (!(error instanceof CustomError)) {
-      return next(new CustomError('Server error', 500));
-    }
-    next(error); // Pass the error to the error handler
-  }
-});
-
-// ============== LOGOUT ROUTE ==============
-/**
- * Clears the access token cookie and also
- * invalidates the refresh token (if provided).
- */
-router.post('/logout', async (req, res, next) => {
-  try {
-    // Clear the access token cookie
-    res.clearCookie('token', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-    });
-
-    // Optionally remove the refresh token from DB
-    const { refreshToken: rawRefresh } = req.body;
-    if (rawRefresh) {
+      // Generate and encrypt a refresh token
+      const rawRefresh = generateRefreshTokenString();
       const encryptedRefresh = encrypt(rawRefresh);
-      await RefreshToken.deleteOne({ token: encryptedRefresh });
-    }
 
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    // If the error is not a CustomError, convert it to one
-    if (!(error instanceof CustomError)) {
-      return next(new CustomError('Server error', 500));
+      // Calculate refresh token expiry
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+      // Store encrypted refresh token in DB
+      await RefreshToken.create({
+        userId: user._id,
+        encryptedToken: encryptedRefresh,
+        expiresAt: expiry,
+      });
+
+      // Set the access token in an HttpOnly cookie
+      res.cookie('token', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000, // 15 minutes in ms
+      });
+
+      // Return plaintext refresh token (only once!)
+      res.json({
+        message: 'Logged in successfully',
+        accessToken,
+        refreshToken: rawRefresh,
+      });
+    } catch (error) {
+      console.log(error);
+      // If the error is not a CustomError, convert it to one
+      if (!(error instanceof CustomError)) {
+        return next(new CustomError('Server error', 500));
+      }
+      next(error); // Pass the error to the error handler
     }
-    next(error); // Pass the error to the error handler
   }
-});
+);
 
+// Export the router containing all authentication routes
 module.exports = router;
