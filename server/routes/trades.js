@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
-const Trade = require('../models/Trade'); 
+const Trade = require('../models/trade'); 
 
 // Get User's Trades
 router.get('/', auth, async (req, res) => {

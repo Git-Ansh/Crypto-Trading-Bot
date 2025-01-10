@@ -1,4 +1,4 @@
-// server/models/RefreshToken.js
+// server/models/RefreshTokens.js
 const mongoose = require('mongoose');
 
 const RefreshTokenSchema = new mongoose.Schema({

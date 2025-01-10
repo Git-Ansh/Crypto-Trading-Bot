@@ -1,4 +1,4 @@
-const RefreshToken = require('../models/RefreshToken');
+const RefreshToken = require('../models/RefreshTokens');
 
 async function removeExpiredTokens() {
   try {
