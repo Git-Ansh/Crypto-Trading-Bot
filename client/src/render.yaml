@@ -1,0 +1,8 @@
+services:
+  - type: web
+    buildCommand: "" # Your build command if needed
+    staticPublishPath: ./build # Path to your build directory
+    headers:
+      - path: "*.jsx"
+        headers:
+          Content-Type: text/javascript
