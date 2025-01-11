@@ -1,6 +1,6 @@
 services:
   - type: web
-    buildCommand: "" # Your build command if needed
+    buildCommand: "npm run build" # Your build command if needed
     staticPublishPath: ./build # Path to your build directory
     headers:
       - path: "*.jsx"
