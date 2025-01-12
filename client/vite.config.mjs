@@ -12,6 +12,7 @@ export default defineConfig({
   base: '/free/',
   build: {
     outDir: 'dist',
+    emptyOutDir: true,
   },
   define: {
     global: 'window'
