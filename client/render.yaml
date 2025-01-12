@@ -1,8 +1,26 @@
 services:
-  - type: web
-    buildCommand: "npm run build" # Your build command if needed
-    staticPublishPath: ./build # Path to your build directory
+  - type: static
+    name: cryptopilot
+    env: static
+    buildCommand: npm run build
+    publishPath: dist
     headers:
-      - path: "*.jsx"
-        headers:
-          Content-Type: text/javascript
+      - for: '*.js'
+        values:
+          Content-Type: application/javascript
+      - for: '*.css'
+        values:
+          Content-Type: text/css
+      - for: '*.png'
+        values:
+          Content-Type: image/png
+      - for: '*.jpg'
+        values:
+          Content-Type: image/jpeg
+      - for: '*.svg'
+        values:
+          Content-Type: image/svg+xml
+    redirects:
+      - source: /*
+        destination: /free/index.html
+        status: 200
