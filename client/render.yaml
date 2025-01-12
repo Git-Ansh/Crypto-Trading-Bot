@@ -8,6 +8,9 @@ services:
       - for: '*.js'
         values:
           Content-Type: application/javascript
+      - for: '*.mjs'
+        values:
+          Content-Type: application/javascript
       - for: '*.css'
         values:
           Content-Type: text/css
