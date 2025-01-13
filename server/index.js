@@ -36,7 +36,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://crypto-pilot.onrender.com/', // Replace with your frontend URL
+  origin: 'https://crypto-pilot.onrender.com', // Replace with your frontend URL
   credentials: true, // Allow cookies to be sent
 }));
 app.use(express.json());
