@@ -29,7 +29,10 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Google from '../../assets/images/social-google.svg';
 
+
+
 const Login = ({ ...others }) => {
+  
   const theme = useTheme();
   const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
   const navigate = useNavigate();
@@ -49,6 +52,9 @@ const Login = ({ ...others }) => {
     event.preventDefault();
   };
 
+
+  
+  // Ensure essential environment variables are set
   return (
     <>
       <Grid container direction="column" justifyContent="center" spacing={2}>
@@ -134,7 +140,12 @@ const Login = ({ ...others }) => {
           try {
             // Implement form submission logic here (e.g., authenticate user)
             // 1) Send login request
-            const response = await axios.post('https://crypto-trading-bot-sa5d.onrender.com/api/auth/login', {
+            var address = 'https://crypto-trading-bot-sa5d.onrender.com/api/auth/login';
+            if (process.env.NODE_ENV === 'development') {
+              address = 'http://localhost:5000/api/auth/login';
+            }
+            console.log('address', address);
+            const response = await axios.post(address, {
                 email: values.email,
                 password: values.password,
                 headers: {
@@ -250,7 +261,7 @@ const Login = ({ ...others }) => {
               spacing={1}
               sx={{ mt: 1 }}
             >
-              <FormControlLabel
+              {/* <FormControlLabel
                 control={
                   <Checkbox
                     checked={checked}
@@ -260,7 +271,7 @@ const Login = ({ ...others }) => {
                   />
                 }
                 label="Remember me"
-              />
+              /> */}
               <Typography
                 variant="subtitle1"
                 color="secondary"
@@ -297,6 +308,19 @@ const Login = ({ ...others }) => {
                   {isSubmitting ? 'Signing in...' : 'Sign in'}
                 </Button>
               </AnimateButton>
+              <Typography
+              position={'center'}
+                variant="subtitle1"
+                color="secondary"
+                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                onClick={() => {
+                  navigate('/form');
+                  // Implement forgot password logic or navigation here
+                  console.log('sign up Clicked');
+                }}
+              >
+                Don't have an account?
+              </Typography>
             </Box>
           </form>
         )}
