@@ -137,7 +137,12 @@ const Login = ({ ...others }) => {
             const response = await axios.post('https://crypto-trading-bot-sa5d.onrender.com/api/auth/login', {
                 email: values.email,
                 password: values.password,
-              });
+                headers: {
+                    'Content-Type': 'application/json'
+                  }
+                });
+                console.log('Login successful:', response.data);
+              
             // 2) Suppose the server returns { accessToken, refreshToken }
             const { accessToken, refreshToken } = response.data;  
              // 3) Store tokens (localStorage or cookies)
