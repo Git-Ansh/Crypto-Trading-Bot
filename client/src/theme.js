@@ -1,9 +1,8 @@
+// src/theme.js
 import { createTheme } from "@mui/material";
-import { useMemo } from "react";
-import { useState } from "react";
-import { createContext } from "react";
+import { useState, useMemo, createContext } from "react";
 
-// Color Design Tokens
+// Color tokens
 export const tokens = (mode) => ({
   ...(mode === "dark"
     ? {
@@ -28,6 +27,9 @@ export const tokens = (mode) => ({
           700: "#0c101b",
           800: "#080b12",
           900: "#040509",
+        },
+        secondary: {
+          main: "#000000",
         },
         greenAccent: {
           100: "#dbf5ee",
@@ -64,6 +66,7 @@ export const tokens = (mode) => ({
         },
       }
     : {
+        // Light mode tokens
         gray: {
           100: "#141414",
           200: "#292929",
@@ -79,12 +82,15 @@ export const tokens = (mode) => ({
           100: "#040509",
           200: "#080b12",
           300: "#0c101b",
-          400: "#fcfcfc",
-          500: "#f2f0f0",
+          400: "#fcfcfc", // background
+          500: "#f2f0f0", // paper
           600: "#434957",
           700: "#727681",
           800: "#a1a4ab",
           900: "#d0d1d5",
+        },
+        secondary: {
+          main: "#000000",
         },
         greenAccent: {
           100: "#0f2922",
@@ -122,14 +128,14 @@ export const tokens = (mode) => ({
       }),
 });
 
-// Mui Theme Settings
+// MUI Theme Settings
 export const themeSettings = (mode) => {
   const colors = tokens(mode);
 
   return {
     palette: {
       mode: mode,
-      ...(mode === "dark"
+      ...(mode === "light"
         ? {
             primary: {
               main: colors.primary[500],
@@ -143,7 +149,7 @@ export const themeSettings = (mode) => {
               light: colors.gray[100],
             },
             background: {
-              default: colors.primary[500],
+              default: colors.primary[500], // for dark
             },
           }
         : {
@@ -159,7 +165,7 @@ export const themeSettings = (mode) => {
               light: colors.gray[100],
             },
             background: {
-              default: colors.primary[500],
+              default: colors.primary[400], // for light
             },
           }),
     },
@@ -200,14 +206,17 @@ export const ColorModeContext = createContext({
 });
 
 export const useMode = () => {
-  const [mode, setMode] = useState("dark");
+  const [mode, setMode] = useState("light");
 
-  const colorMode = useMemo(() => ({
-    toggleColorMode: () =>
-      setMode((prev) => (prev === "light" ? "dark" : "light")),
-  }));
+  const colorMode = useMemo(
+    () => ({
+      toggleColorMode: () =>
+        setMode((prev) => (prev === "light" ? "dark" : "light")),
+    }),
+    []
+  );
 
-  const theme = useMemo(() => createTheme(themeSettings(mode), [mode]));
+  const theme = useMemo(() => createTheme(themeSettings(mode)), [mode]);
 
   return [theme, colorMode];
 };

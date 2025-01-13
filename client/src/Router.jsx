@@ -1,7 +1,10 @@
+// src/AppRouter.jsx
 import React from "react";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import ProtectedRoute from "./routes/ProtectedRoute"; // your new file
 import App from "./App";
 import {
+  Login,
   Dashboard,
   Team,
   Invoices,
@@ -18,10 +21,15 @@ import {
 
 const AppRouter = () => {
   return (
-    <Router>
-      <Routes>
+    <Routes>
+      {/* Public route for login */}
+      <Route path="/" element={<Login />} />
+
+      {/* A protected wrapper route for everything else */}
+      <Route element={<ProtectedRoute />}>
+        {/* These routes are only accessible if isAuthenticated === true */}
         <Route path="/" element={<App />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard/:userId" element={<Dashboard />} />
           <Route path="/team" element={<Team />} />
           <Route path="/contacts" element={<Contacts />} />
           <Route path="/invoices" element={<Invoices />} />
@@ -34,8 +42,8 @@ const AppRouter = () => {
           <Route path="/faq" element={<FAQ />} />
           <Route path="/geography" element={<Geography />} />
         </Route>
-      </Routes>
-    </Router>
+      </Route>
+    </Routes>
   );
 };
 
