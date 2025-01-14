@@ -1,14 +1,25 @@
 // src/App.jsx
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
 import { Navbar, SideBar } from "./scenes";
 import { Outlet } from "react-router-dom";
+import { scheduleTokenRefresh, clearTokenRefresh } from './utils/tokenService';
 
 // Optional: If you want a context for toggling the sidebar
 export const ToggledContext = createContext(null);
 
-function App() {
+//function App() {
+
+  const App = () => {
+    useEffect(() => {
+      scheduleTokenRefresh();
+  
+      return () => {
+        clearTokenRefresh();
+      };
+    }, []);
+
   // 1) Get the theme and colorMode objects from our custom hook
   const [theme, colorMode] = useMode();
 

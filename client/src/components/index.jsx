@@ -7,8 +7,9 @@ import StreamChart from "./StreamChart";
 import GeographyChart from "./GeographyChart";
 import ProgressCircle from "./ProgressCircle";
 import StatBox from "./StatBox";
-
+import LogoutButton from "./LogoutButton";
 export {
+  LogoutButton,
   Header,
   AccordionItem,
   BarChart,

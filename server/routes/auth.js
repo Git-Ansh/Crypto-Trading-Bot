@@ -127,7 +127,7 @@ router.post(
       // Set the access token in an HttpOnly cookie
       res.cookie('token', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'development',
         sameSite: 'strict',
         maxAge: 15 * 60 * 1000, // 15 minutes in ms
       });
@@ -148,6 +148,140 @@ router.post(
     }
   }
 );
+
+// ============== VERIFY TOKEN ROUTE ==============
+router.get('/verify', async (req, res, next) => {
+  try {
+    const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+
+    if (!token) {
+      throw new CustomError('No token provided', 401);
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    res.json({ message: 'Token is valid', user: decoded.user });
+  } catch (error) {
+    console.error(error);
+    if (error.name === 'TokenExpiredError') {
+      throw new CustomError('Token has expired', 401);
+    } else if (error.name === 'JsonWebTokenError') {
+      throw new CustomError('Invalid token', 401);
+    }
+    next(new CustomError('Server error', 500));
+  }
+});
+
+// ============== REFRESH TOKEN ROUTE ==============
+router.post('/refresh-token', async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      throw new CustomError('Refresh token is required', 400);
+    }
+
+    // Decrypt the received refresh token
+    const decryptedRefresh = decrypt(refreshToken);
+
+    // Find the refresh token in the database
+    const storedToken = await RefreshToken.findOne({ encryptedToken: encrypt(decryptedRefresh) });
+
+    if (!storedToken) {
+      throw new CustomError('Invalid refresh token', 403);
+    }
+
+    // Check if the refresh token has expired
+    if (storedToken.expiresAt < new Date()) {
+      // Delete the expired refresh token
+      await RefreshToken.deleteOne({ _id: storedToken._id });
+      throw new CustomError('Refresh token has expired', 403);
+    }
+
+    // Find the associated user
+    const user = await User.findById(storedToken.userId);
+    if (!user) {
+      throw new CustomError('User not found', 404);
+    }
+
+    // Generate a new access token
+    const accessPayload = { user: { id: user.id } };
+    const newAccessToken = jwt.sign(accessPayload, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+    // Optionally: Generate a new refresh token and invalidate the old one
+    // Comment out the following block if you want to reuse the same refresh token
+    const newRefreshString = generateRefreshTokenString();
+    const newEncryptedRefresh = encrypt(newRefreshString);
+
+    // Calculate new expiry
+    const newExpiry = new Date();
+    newExpiry.setDate(newExpiry.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
+
+    // Store the new refresh token and delete the old one
+    await RefreshToken.create({
+      userId: user._id,
+      encryptedToken: newEncryptedRefresh,
+      expiresAt: newExpiry,
+    });
+    await RefreshToken.deleteOne({ _id: storedToken._id });
+
+    // Send the new tokens to the client
+    res.cookie('refreshToken', newRefreshString, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'development',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+    });
+
+    res.cookie('token', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'development',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000, // 15 minutes in ms
+    });
+
+    res.json({
+      message: 'Token refreshed successfully',
+      accessToken: newAccessToken,
+    });
+  } catch (error) {
+    console.error(error);
+    if (!(error instanceof CustomError)) {
+      return next(new CustomError('Server error', 500));
+    }
+    next(error);
+  }
+});
+
+// ============== LOGOUT ROUTE ==============
+router.post('/logout', async (req, res, next) => {
+  try {
+    const { refreshToken } = req.cookies;
+
+    if (refreshToken) {
+      // Decrypt and delete the refresh token from the database
+      const decryptedRefresh = decrypt(refreshToken);
+      await RefreshToken.deleteOne({ encryptedToken: encrypt(decryptedRefresh) });
+    }
+
+    // Clear cookies
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'development',
+      sameSite: 'strict',
+    });
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'development',
+      sameSite: 'strict',
+    });
+
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error(error);
+    next(new CustomError('Server error', 500));
+  }
+});
 
 // Export the router containing all authentication routes
 module.exports = router;

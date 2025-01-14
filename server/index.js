@@ -2,7 +2,7 @@
 const dotenv = require('dotenv');
 
 // Load environment variables from .env or .env.test based on NODE_ENV
-const envFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env';
+const envFile = process.env.NODE_ENV;
 dotenv.config({ path: envFile });
 
 const express = require('express');
@@ -22,7 +22,7 @@ const {
   ENCRYPTION_KEY,
   MONGO_URI,
 } = process.env;
-
+console.log('NODE_ENV', NODE_ENV);
 // Ensure essential environment variables are set
 if (!JWT_SECRET || !ENCRYPTION_KEY || !MONGO_URI) {
   console.error('Missing essential environment variables. Exiting...');
@@ -32,12 +32,12 @@ if (!JWT_SECRET || !ENCRYPTION_KEY || !MONGO_URI) {
 const app = express();
 //const PORT = process.env.PORT || 5000;
 
-
 var address = 'https://crypto-pilot.onrender.com';
 
-if (NODE_ENV === 'test') {
+if (NODE_ENV === 'development') {
   address = 'http://localhost:5173';
 }
+console.log('CORS address set to:', address);
 console.log('address', address);
 // Middleware
 app.use(cors({
@@ -100,6 +100,16 @@ app.use('/api/trades', tradesRoutes);
 app.get('/', (req, res) => {
   res.send('Welcome to the Crypto Trading Bot API');
 });
+
+// Serve frontend in production
+const path = require('path');
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist'))); // Adjust path as needed
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+  });
+}
 
 // Error Handling Middleware (Must be after all other routes)
 const errorHandler = require('./middleware/errorHandler');

@@ -1,8 +1,8 @@
 // src/scenes/login/Login.jsx
 import React, { useState } from 'react';
-import AppRouter from '../../Router';
+//import AppRouter from '../../Router';
 import {jwtDecode} from 'jwt-decode';
-import axios from 'axios';
+import axiosInstance from '../../utils/axiosInstance';
 import {
   Box,
   Button,
@@ -51,9 +51,12 @@ const Login = ({ ...others }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-
-
-  
+  console.log('process.env.NODE_ENV', process.env.NODE_ENV);
+  var address = 'https://crypto-trading-bot-sa5d.onrender.com/api/auth/login';
+  if (process.env.NODE_ENV === 'development') {
+    address = 'http://localhost:5000/api/auth/login';
+  }
+  console.log('address', address);
   // Ensure essential environment variables are set
   return (
     <>
@@ -136,16 +139,14 @@ const Login = ({ ...others }) => {
             .max(255)
             .required('Password is required'),
         })}
+        
         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
           try {
             // Implement form submission logic here (e.g., authenticate user)
             // 1) Send login request
-            var address = 'https://crypto-trading-bot-sa5d.onrender.com/api/auth/login';
-            if (process.env.NODE_ENV === 'test') {
-              address = 'http://localhost:5000/api/auth/login';
-            }
-            console.log('address', address);
-            const response = await axios.post(address, {
+            console.log(address);
+            
+            const response = await axiosInstance.post(address, {
                 email: values.email,
                 password: values.password,
                 headers: {
@@ -156,12 +157,14 @@ const Login = ({ ...others }) => {
               
             // 2) Suppose the server returns { accessToken, refreshToken }
             const { accessToken, refreshToken } = response.data;  
+
              // 3) Store tokens (localStorage or cookies)
              localStorage.setItem('accessToken', accessToken);
              localStorage.setItem('refreshToken', refreshToken);
 
              // decode the JWT to get user info
             const decoded = jwtDecode(accessToken); 
+
             // e.g. { sub: "123", email: "alice@example.com", iat: ..., exp: ... }
             const userId = decoded.user.id;
             console.log(decoded);

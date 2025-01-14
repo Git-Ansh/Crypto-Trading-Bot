@@ -1,18 +1,32 @@
 // src/routes/ProtectedRoute.jsx
-import React from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import axiosInstance from '../utils/axiosInstance';
 
 const ProtectedRoute = () => {
-  // 1) Check some form of auth: e.g., token in localStorage
-  const isAuthenticated = !!localStorage.getItem('accessToken');
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
-  // 2) If not authenticated, redirect to login
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+  useEffect(() => {
+    const verifyToken = async () => {
+      try {
+        // Call a protected endpoint to verify authentication
+        await axiosInstance.get('/auth/verify'); // Implement this endpoint on the backend
+        setIsAuthenticated(true);
+      } catch (error) {
+        setIsAuthenticated(false);
+      }
+    };
+
+    verifyToken();
+  }, []);
+
+  if (isAuthenticated === null) {
+    // Optionally, return a loading indicator
+    return <div>Loading...</div>;
   }
 
-  // 3) Otherwise, render the nested routes (Outlet)
-  return <Outlet />;
+  return isAuthenticated ? <Outlet /> : <Navigate to="/" replace />;
 };
 
 export default ProtectedRoute;
