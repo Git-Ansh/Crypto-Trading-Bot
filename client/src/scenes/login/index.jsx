@@ -141,7 +141,7 @@ const Login = ({ ...others }) => {
             // Implement form submission logic here (e.g., authenticate user)
             // 1) Send login request
             var address = 'https://crypto-trading-bot-sa5d.onrender.com/api/auth/login';
-            if (process.env.NODE_ENV === 'development') {
+            if (process.env.NODE_ENV === 'test') {
               address = 'http://localhost:5000/api/auth/login';
             }
             console.log('address', address);

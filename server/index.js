@@ -35,7 +35,7 @@ const app = express();
 
 var address = 'https://crypto-pilot.onrender.com';
 
-if (NODE_ENV === 'development') {
+if (NODE_ENV === 'test') {
   address = 'http://localhost:5173';
 }
 console.log('address', address);
