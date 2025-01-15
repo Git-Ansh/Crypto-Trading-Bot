@@ -105,7 +105,10 @@ router.post(
       }
 
       // Invalidate existing refresh tokens for the user
-      await RefreshToken.deleteMany({ userId: user._id });
+      await RefreshToken.deleteMany({
+        userId: user._id,
+        expiresAt: { $lt: new Date() },
+      });
 
       // Create short-lived JWT Access Token
       const accessPayload = { user: { id: user.id } };
