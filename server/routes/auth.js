@@ -152,7 +152,12 @@ router.post(
 // ============== VERIFY TOKEN ROUTE ==============
 router.get('/verify', async (req, res, next) => {
   try {
+    console.log('Environment:', process.env.NODE_ENV);
+    console.log('Headers:', req.headers);
+    console.log('Cookies:', req.cookies);
     const token = req.cookies.token || req.headers['authorization']?.split(' ')[1];
+    console.log('Extracted Token:', token);
+    next();
     console.log('Token:', token); // Debugging
     if (!token) {
       throw new CustomError('No token provided', 401);
