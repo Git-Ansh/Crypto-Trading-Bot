@@ -127,7 +127,7 @@ router.post(
       // Set the access token in an HttpOnly cookie
       res.cookie('token', accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'development',
+        secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 15 * 60 * 1000, // 15 minutes in ms
       });
@@ -228,14 +228,14 @@ router.post('/refresh-token', async (req, res, next) => {
     // Send the new tokens to the client
     res.cookie('refreshToken', newRefreshString, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
     });
 
     res.cookie('token', newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 15 * 60 * 1000, // 15 minutes in ms
     });
@@ -267,12 +267,12 @@ router.post('/logout', async (req, res, next) => {
     // Clear cookies
     res.clearCookie('token', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'development',
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
 
