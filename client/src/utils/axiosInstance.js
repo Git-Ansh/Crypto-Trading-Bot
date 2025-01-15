@@ -1,5 +1,5 @@
 import axios from "axios";
-import scheduleTokenRefresh from "./tokenService";
+import { scheduleTokenRefresh } from "./tokenService";
 let address = "https://crypto-trading-bot-sa5d.onrender.com/api/";
 if (process.env.NODE_ENV === "development") {
   address = "http://localhost:5000/api/";
