@@ -278,13 +278,10 @@ router.post("/refresh-token", async (req, res, next) => {
 router.post("/logout", async (req, res, next) => {
   try {
     const { refreshToken } = req.cookies;
-
     if (refreshToken) {
-      // Decrypt and delete the refresh token from the database
-      const decryptedRefresh = decrypt(refreshToken);
-      await RefreshToken.deleteOne({
-        encryptedToken: encrypt(decryptedRefresh),
-      });
+      // We do *not* call 'decrypt' because this is the raw token
+      const encryptedRefresh = encrypt(refreshToken);
+      await RefreshToken.deleteOne({ encryptedToken: encryptedRefresh });
     }
 
     // Clear cookies
