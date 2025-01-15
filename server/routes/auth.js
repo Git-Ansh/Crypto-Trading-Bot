@@ -135,7 +135,7 @@ router.post(
         maxAge: 15 * 60 * 1000, // 15 minutes in ms
       });
 
-      res.cookie("refreshToken", rawRefreshToken, {
+      res.cookie("refreshToken", rawRefresh, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
