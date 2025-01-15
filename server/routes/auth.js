@@ -186,7 +186,7 @@ router.get("/verify", async (req, res, next) => {
     } else if (error.name === "JsonWebTokenError") {
       throw new CustomError("Invalid token", 401);
     }
-    next(new CustomError("Server error", 500));
+    next(new CustomError("Server error", error.message, 500));
   }
 });
 
