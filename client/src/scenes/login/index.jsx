@@ -160,7 +160,7 @@ const Login = ({ ...others }) => {
             // 2) Suppose the server returns { accessToken, refreshToken }
             const { accessToken, refreshToken } = response.data;
             if (response.data.expiresIn) {
-              scheduleTokenRefresh(response.data.expiresIn);
+              //scheduleTokenRefresh(response.data.expiresIn);
             }
 
             console.log("2");
