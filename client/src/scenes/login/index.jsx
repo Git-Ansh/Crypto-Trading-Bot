@@ -1,344 +1,103 @@
-// src/scenes/login/Login.jsx
-import React, { useState } from "react";
-//import AppRouter from '../../Router';
-import { jwtDecode } from "jwt-decode";
-import axiosInstance from "../../utils/axiosInstance";
-import {
-  Box,
-  Button,
-  Checkbox,
-  Divider,
-  FormControl,
-  FormControlLabel,
-  FormHelperText,
-  Grid,
-  IconButton,
-  InputAdornment,
-  InputLabel,
-  OutlinedInput,
-  Stack,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import * as Yup from "yup";
-import { Formik } from "formik";
+import MailOutline from "@mui/icons-material/MailOutline";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import AnimateButton from "../../components/AnimateButton";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import Google from "../../assets/images/social-google.svg";
+import axiosInstance from "../../utils/axiosInstance";
+import SocialLogin from "../../components/SocialLogin";
+import InputField from "../../components/InputField";
 
-const Login = ({ ...others }) => {
-  const theme = useTheme();
-  const matchDownSM = useMediaQuery(theme.breakpoints.down("md"));
+const Login = () => {
   const navigate = useNavigate();
-  const [checked, setChecked] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const address =
+    process.env.NODE_ENV === "development"
+      ? "http://localhost:5000/api/auth/login"
+      : "https://crypto-trading-bot-sa5d.onrender.com/api/auth/login";
+  // Check if the user is already logged in
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const verifyResponse = await axiosInstance.get("/auth/verify");
+        console.log("User is already logged in:", verifyResponse.data.user);
+        // Redirect to the dashboard if authenticated
+        navigate(`/dashboard/${verifyResponse.data.user.id}`);
+      } catch (error) {
+        console.log("User is not logged in, proceeding to login.");
+      }
+    };
 
-  const googleHandler = async () => {
-    console.error("Login with Google");
-    // Implement Google authentication logic here
+    checkLoginStatus();
+  }, [navigate]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault(); // Prevent the form from reloading the page
+    try {
+      console.log("Sending login request...");
+      console.log("email:", email);
+      console.log("password:", password);
+      // Make sure email and password are not empty
+      if (!email || !password) {
+        alert("Please enter both email and password.");
+        return;
+      }
+
+      const response = await axiosInstance.post(
+        address,
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+      console.log("Login successful:", response.data);
+
+      // Verify the token after login
+      const verifyResponse = await axiosInstance.get("/auth/verify");
+      console.log("User info from verify:", verifyResponse.data.user);
+
+      // Redirect to the dashboard
+      navigate(`/dashboard/${verifyResponse.data.user.id}`);
+    } catch (err) {
+      console.error("Error during login process:", err.response?.data);
+      alert("Login failed. Please check your credentials and try again.");
+    }
   };
 
-  const handleClickShowPassword = () => {
-    setShowPassword((prev) => !prev);
-  };
-
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
-  console.log("process.env.NODE_ENV", process.env.NODE_ENV);
-  var address = "https://crypto-trading-bot-sa5d.onrender.com/api/auth/login";
-  if (process.env.NODE_ENV === "development") {
-    address = "http://localhost:5000/api/auth/login";
-  }
-  console.log("address", address);
-  // Ensure essential environment variables are set
   return (
-    <>
-      <Grid container direction="column" justifyContent="center" spacing={2}>
-        <Grid item xs={12}>
-          <AnimateButton>
-            <Button
-              disableElevation
-              fullWidth
-              onClick={googleHandler}
-              size="Large"
-              variant="outlined"
-              sx={{
-                color: "#ffffff",
-                backgroundColor: "#000000",
-                borderColor: theme.palette.grey[100],
-                "&:hover": {
-                  backgroundColor: theme.palette.grey[100],
-                },
-              }}
-            >
-              <Box sx={{ mr: { xs: 1, sm: 2 }, width: 20 }}>
-                <img
-                  src={Google}
-                  alt="Google"
-                  width={16}
-                  height={16}
-                  style={{ marginRight: matchDownSM ? 8 : 16 }}
-                />
-              </Box>
-              Sign in with Google
-            </Button>
-          </AnimateButton>
-        </Grid>
-
-        <Grid item xs={12}>
-          <Box sx={{ alignItems: "center", display: "flex" }}>
-            <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-            <Button
-              variant="outlined"
-              sx={{
-                cursor: "unset",
-                m: 2,
-                py: 0.5,
-                px: 7,
-                borderColor: `${theme.palette.grey[100]} !important`,
-                color: `${theme.palette.grey[900]} !important`,
-                fontWeight: 500,
-                borderRadius: theme.shape.borderRadius, // from MUI theme
-                backgroundColor: theme.palette.background.paper,
-              }}
-              disableRipple
-              disabled
-            >
-              OR
-            </Button>
-            <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
-          </Box>
-        </Grid>
-
-        <Grid
-          item
-          xs={12}
-          container
-          alignItems="center"
-          justifyContent="center"
-        >
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">
-              Sign in with Email Address
-            </Typography>
-          </Box>
-        </Grid>
-      </Grid>
-
-      <Formik
-        initialValues={{
-          email: "",
-          password: "",
-          submit: null,
-        }}
-        validationSchema={Yup.object().shape({
-          email: Yup.string()
-            .email("Must be a valid email")
-            .max(255)
-            .required("Email is required"),
-          password: Yup.string().max(255).required("Password is required"),
-        })}
-        onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
-          try {
-            // Implement form submission logic here (e.g., authenticate user)
-            // 1) Send login request
-            console.log(address);
-
-            const response = await axiosInstance.post(address, {
-              email: values.email,
-              password: values.password,
-              headers: {
-                "Content-Type": "application/json",
-              },
-            });
-            console.log("Login successful:", response.data);
-
-            // 2) Suppose the server returns { accessToken, refreshToken }
-            const { accessToken, refreshToken } = response.data;
-            if (response.data.expiresIn) {
-              //scheduleTokenRefresh(response.data.expiresIn);
-            }
-
-            console.log("2");
-
-            // const decoded = jwtDecode(accessToken);
-            // console.log("3");
-            // const userId = decoded.user.id;
-            // console.log(decoded);
-            // console.log("User ID:", userId);
-
-            const verifyResponse = await axiosInstance.get("/auth/verify");
-            console.log("User info from verify:", verifyResponse.data.user);
-            console.log("4");
-            // 4) Mark success, stop loading
-            setStatus({ success: true });
-            setSubmitting(false);
-            console.log("5");
-            // 5) Redirect to the dashboard
-            navigate(`/dashboard/${verifyResponse.data.user.id}`);
-          } catch (err) {
-            console.error(err);
-            setStatus({ success: false });
-            setErrors({ submit: err.message });
-            setSubmitting(false);
-          }
-        }}
-      >
-        {({
-          errors,
-          handleBlur,
-          handleChange,
-          handleSubmit,
-          isSubmitting,
-          touched,
-          values,
-        }) => (
-          <form noValidate onSubmit={handleSubmit} {...others}>
-            <FormControl
-              fullWidth
-              error={Boolean(touched.email && errors.email)}
-              sx={{ ...theme.typography.customInput }}
-            >
-              <InputLabel htmlFor="outlined-adornment-email-login">
-                Email Address / Username
-              </InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-email-login"
-                type="email"
-                value={values.email}
-                name="email"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                label="Email Address / Username"
-                inputProps={{}}
-              />
-              {touched.email && errors.email && (
-                <FormHelperText
-                  error
-                  id="standard-weight-helper-text-email-login"
-                >
-                  {errors.email}
-                </FormHelperText>
-              )}
-            </FormControl>
-
-            <FormControl
-              fullWidth
-              error={Boolean(touched.password && errors.password)}
-              sx={{ ...theme.typography.customInput }}
-            >
-              <InputLabel htmlFor="outlined-adornment-password-login">
-                Password
-              </InputLabel>
-              <OutlinedInput
-                id="outlined-adornment-password-login"
-                type={showPassword ? "text" : "password"}
-                value={values.password}
-                name="password"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                endAdornment={
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                      onMouseDown={handleMouseDownPassword}
-                      edge="end"
-                      size="large"
-                    >
-                      {showPassword ? <Visibility /> : <VisibilityOff />}
-                    </IconButton>
-                  </InputAdornment>
-                }
-                label="Password"
-                inputProps={{}}
-              />
-              {touched.password && errors.password && (
-                <FormHelperText
-                  error
-                  id="standard-weight-helper-text-password-login"
-                >
-                  {errors.password}
-                </FormHelperText>
-              )}
-            </FormControl>
-
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              spacing={1}
-              sx={{ mt: 1 }}
-            >
-              {/* <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={checked}
-                    onChange={(event) => setChecked(event.target.checked)}
-                    name="checked"
-                    color="primary"
-                  />
-                }
-                label="Remember me"
-              /> */}
-              <Typography
-                variant="subtitle1"
-                color="secondary"
-                sx={{ textDecoration: "none", cursor: "pointer" }}
-                onClick={() => {
-                  // Implement forgot password logic or navigation here
-                  console.log("Forgot Password Clicked");
-                }}
-              >
-                Forgot Password?
-              </Typography>
-            </Stack>
-
-            {errors.submit && (
-              <Box sx={{ mt: 3 }}>
-                <FormHelperText error>{errors.submit}</FormHelperText>
-              </Box>
-            )}
-
-            <Box sx={{ mt: 2 }}>
-              <AnimateButton>
-                <Button
-                  disableElevation
-                  disabled={isSubmitting}
-                  fullWidth
-                  size="large"
-                  type="submit"
-                  variant="contained"
-                  color="secondary"
-                  sx={{
-                    textTransform: "none",
-                  }}
-                >
-                  {isSubmitting ? "Signing in..." : "Sign in"}
-                </Button>
-              </AnimateButton>
-              <Typography
-                position={"center"}
-                variant="subtitle1"
-                color="secondary"
-                sx={{ textDecoration: "none", cursor: "pointer" }}
-                onClick={() => {
-                  navigate("/form");
-                  // Implement forgot password logic or navigation here
-                  console.log("sign up Clicked");
-                }}
-              >
-                Don't have an account?
-              </Typography>
-            </Box>
-          </form>
-        )}
-      </Formik>
-    </>
+    <div className="login-container">
+      <h2 className="form-title">Log in with</h2>
+      <SocialLogin />
+      <p className="separator">
+        <span>or</span>
+      </p>
+      <form className="login-form" onSubmit={handleSubmit}>
+        <InputField
+          type="email"
+          placeholder="Email address"
+          icon={<MailOutline />}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <InputField
+          type="password"
+          placeholder="Password"
+          icon={<LockOutlined />}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <a href="#" className="forgot-password-link">
+          Forgot password?
+        </a>
+        <button type="submit" className="login-button">
+          Log In
+        </button>
+      </form>
+      <p className="signup-prompt">
+        Don&apos;t have an account?{" "}
+        <a href="/form" className="signup-link">
+          Sign up
+        </a>
+      </p>
+    </div>
   );
 };
 

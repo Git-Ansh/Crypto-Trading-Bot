@@ -24,6 +24,7 @@ const AppRouter = () => {
     <Routes>
       {/* Public route for login */}
       <Route path="/" element={<Login />} />
+      <Route path="/form" element={<Form />} />
 
       {/* A protected wrapper route for everything else */}
       <Route element={<ProtectedRoute />}>
@@ -33,7 +34,6 @@ const AppRouter = () => {
         <Route path="/team" element={<Team />} />
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/invoices" element={<Invoices />} />
-        <Route path="/form" element={<Form />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/bar" element={<Bar />} />
         <Route path="/pie" element={<Pie />} />

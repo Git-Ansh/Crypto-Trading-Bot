@@ -37,9 +37,7 @@ function Dashboard() {
         <Header title="DASHBOARD" subtitle="Welcome to your dashboard" />
         {!isXsDevices && (
           <Box>
-            <LogoutButton>
-              LOGOUT
-            </LogoutButton>
+            <LogoutButton>LOGOUT</LogoutButton>
           </Box>
         )}
       </Box>

@@ -1,164 +1,103 @@
-import { Box, Button, TextField, useMediaQuery } from "@mui/material";
-import { Header } from "../../components";
-import { Formik } from "formik";
-import * as yup from "yup";
+import MailOutline from "@mui/icons-material/MailOutline";
+import LockOutlined from "@mui/icons-material/LockOutlined";
+import Name from "@mui/icons-material/Anchor";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../utils/axiosInstance";
+import SocialLogin from "../../components/SocialLogin";
+import InputField from "../../components/InputField";
 
-const initialValues = {
-  firstName: "",
-  lastName: "",
-  email: "",
-  contact: "",
-  address1: "",
-  address2: "",
-};
+const Login = () => {
+  const navigate = useNavigate();
+  const [userId, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-const phoneRegExp =
-  /^((\+[1-9]{1,4}[ -]?)|(\([0-9]{2,3}\)[ -]?)|([0-9]{2,4})[ -]?)*?[0-9]{3,4}[ -]?[0-9]{3,4}$/;
+  // Check if the user is already logged in
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const verifyResponse = await axiosInstance.get("/auth/verify");
+        console.log("User is already logged in:", verifyResponse.data.user);
+        // Redirect to the dashboard if authenticated
+        navigate(`/dashboard/${verifyResponse.data.user.id}`);
+      } catch (error) {
+        console.log("User is not logged in, proceeding to login.");
+      }
+    };
 
-const checkoutSchema = yup.object().shape({
-  firstName: yup.string().required("required"),
-  lastName: yup.string().required("required"),
-  email: yup.string().email("invalid email").required("required"),
-  contact: yup
-    .string()
-    .matches(phoneRegExp, "Phone number is not valid")
-    .required("required"),
-  address1: yup.string().required("required"),
-  address2: yup.string().required("required"),
-});
+    checkLoginStatus();
+  }, [navigate]);
 
-const Form = () => {
-  const isNonMobile = useMediaQuery("(min-width:600px)");
-  const handleFormSubmit = (values, actions) => {
-    console.log(values);
-    actions.resetForm({
-      values: initialValues,
-    });
+  const handleSubmit = async (event) => {
+    event.preventDefault(); // Prevent the form from reloading the page
+    try {
+      console.log("Sending login request...");
+      const response = await axiosInstance.post("/auth/login", {
+        email,
+        password,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      console.log("Login successful:", response.data);
+
+      // Verify the token after login
+      const verifyResponse = await axiosInstance.get("/auth/verify");
+      console.log("User info from verify:", verifyResponse.data.user);
+
+      // Redirect to the dashboard
+      navigate(`/dashboard/${verifyResponse.data.user.id}`);
+    } catch (err) {
+      console.error("Error during login process:", err);
+      alert("Login failed. Please check your credentials and try again.");
+    }
   };
-  return (
-    <Box m="20px">
-      <Header title="CREATE USER" subtitle="Create a New User Profile" />
 
-      <Formik
-        onSubmit={handleFormSubmit}
-        initialValues={initialValues}
-        validationSchema={checkoutSchema}
-      >
-        {({
-          values,
-          errors,
-          touched,
-          handleBlur,
-          handleChange,
-          handleSubmit,
-        }) => (
-          <form onSubmit={handleSubmit}>
-            <Box
-              display="grid"
-              gap="30px"
-              gridTemplateColumns="repeat(4, minmax(0, 1fr))"
-              sx={{
-                "& > div": {
-                  gridColumn: isNonMobile ? undefined : "span 4",
-                },
-              }}
-            >
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="First Name"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.firstName}
-                name="firstName"
-                error={touched.firstName && errors.firstName}
-                helperText={touched.firstName && errors.firstName}
-                sx={{
-                  gridColumn: "span 2",
-                }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Last Name"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.lastName}
-                name="lastName"
-                error={touched.lastName && errors.lastName}
-                helperText={touched.lastName && errors.lastName}
-                sx={{ gridColumn: "span 2" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Email"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.email}
-                name="email"
-                error={touched.email && errors.email}
-                helperText={touched.email && errors.email}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Contact Number"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.contact}
-                name="contact"
-                error={touched.contact && errors.contact}
-                helperText={touched.contact && errors.contact}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Address 1"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.address1}
-                name="address1"
-                error={touched.address1 && errors.address1}
-                helperText={touched.address1 && errors.address1}
-                sx={{ gridColumn: "span 4" }}
-              />
-              <TextField
-                fullWidth
-                variant="filled"
-                type="text"
-                label="Address 2"
-                onBlur={handleBlur}
-                onChange={handleChange}
-                value={values.address2}
-                name="address2"
-                error={touched.address2 && errors.address2}
-                helperText={touched.address2 && errors.address2}
-                sx={{ gridColumn: "span 4" }}
-              />
-            </Box>
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="end"
-              mt="20px"
-            >
-              <Button type="submit" color="secondary" variant="contained">
-                Create New User
-              </Button>
-            </Box>
-          </form>
-        )}
-      </Formik>
-    </Box>
+  return (
+    <div className="login-container">
+      <h2 className="form-title">Log in with</h2>
+      <SocialLogin />
+      <p className="separator">
+        <span>or</span>
+      </p>
+      <form className="login-form" onSubmit={handleSubmit}>
+        <InputField
+          type="userId"
+          placeholder="User Name"
+          icon={<Name />}
+          value={email}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <InputField
+          type="email"
+          placeholder="Email address"
+          icon={<MailOutline />}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <InputField
+          type="password"
+          placeholder="Password"
+          icon={<LockOutlined />}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+        <a href="#" className="forgot-password-link">
+          Forgot password?
+        </a>
+        <button type="submit" className="login-button">
+          Log In
+        </button>
+      </form>
+      <p className="signup-prompt">
+        Don&apos;t have an account?{" "}
+        <a href="/form" className="signup-link">
+          Sign up
+        </a>
+      </p>
+    </div>
   );
 };
 
-export default Form;
+export default Login;
