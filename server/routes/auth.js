@@ -131,14 +131,16 @@ router.post(
       res.cookie("token", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
-        sameSite: "strict",
+        sameSite: "none",
+        secure: true,
         maxAge: 15 * 60 * 1000, // 15 minutes in ms
       });
 
       res.cookie("refreshToken", rawRefresh, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "none",
+        secure: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // e.g. 7 days
       });
 
@@ -246,14 +248,16 @@ router.post("/refresh-token", async (req, res, next) => {
     res.cookie("refreshToken", newRefreshString, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
+      secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
     });
 
     res.cookie("token", newAccessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
+      secure: true,
       maxAge: 15 * 60 * 1000, // 15 minutes in ms
     });
 
@@ -287,12 +291,14 @@ router.post("/logout", async (req, res, next) => {
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
+      secure: true,
     });
     res.clearCookie("refreshToken", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "none",
+      secure: true,
     });
 
     res.json({ message: "Logged out successfully" });
