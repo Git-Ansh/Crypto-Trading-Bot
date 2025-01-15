@@ -166,7 +166,6 @@ router.get("/verify", async (req, res, next) => {
     console.log("Cookies:", req.cookies);
     const token = req.cookies.token;
     console.log("Extracted Token:", token);
-    next();
     console.log("Token:", token); // Debugging
     if (!token) {
       throw new CustomError("No token provided", 401);
