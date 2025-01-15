@@ -1,49 +1,26 @@
-// src/utils/tokenService.js
+let refreshTimeout;
 
-import {jwtDecode} from 'jwt-decode';
-import axiosInstance from './axiosInstance';
+export const scheduleTokenRefresh = (expiresIn) => {
+  // e.g. server gave us 900 for a 15-minute token
+  const refreshTime = (expiresIn - 60) * 1000; // refresh 1 min before expiry
+  if (refreshTime <= 0) return;
 
-let refreshTokenTimeout;
+  clearTokenRefresh(); // ensure no double-scheduling
 
-export const scheduleTokenRefresh = () => {
-  const accessToken = localStorage.getItem('accessToken');
-  if (!accessToken) return;
-
-  const decoded = jwtDecode(accessToken);
-  const expiresAt = decoded.exp * 1000; // Convert to milliseconds
-  const timeout = expiresAt - Date.now() - 60 * 1000; // Refresh 1 minute before expiry
-
-  if (timeout > 0) {
-    refreshTokenTimeout = setTimeout(refreshToken, timeout);
-  }
-};
-
-const refreshToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem('refreshToken');
-    if (!refreshToken) throw new Error('No refresh token available');
-
-    const response = await axiosInstance.post('/auth/refresh-token', {
-      refreshToken: refreshToken,
-    });
-
-    const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data;
-
-    // Update tokens in localStorage
-    localStorage.setItem('accessToken', newAccessToken);
-    localStorage.setItem('refreshToken', newRefreshToken);
-
-    // Reschedule the next refresh
-    scheduleTokenRefresh();
-  } catch (error) {
-    console.error('Failed to refresh token:', error);
-    // Redirect to login or handle accordingly
-    window.location.href = '/';
-  }
+  refreshTimeout = setTimeout(async () => {
+    try {
+      // Call /auth/refresh-token; sets new cookie
+      const { data } = await axiosInstance.post("/auth/refresh-token");
+      if (data.expiresIn) {
+        scheduleTokenRefresh(data.expiresIn);
+      }
+    } catch (err) {
+      console.error("Failed to refresh token:", err);
+      window.location.href = "/";
+    }
+  }, refreshTime);
 };
 
 export const clearTokenRefresh = () => {
-  if (refreshTokenTimeout) {
-    clearTimeout(refreshTokenTimeout);
-  }
+  if (refreshTimeout) clearTimeout(refreshTimeout);
 };

@@ -1,8 +1,8 @@
 // src/scenes/login/Login.jsx
-import React, { useState } from 'react';
+import React, { useState } from "react";
 //import AppRouter from '../../Router';
-import {jwtDecode} from 'jwt-decode';
-import axiosInstance from '../../utils/axiosInstance';
+import { jwtDecode } from "jwt-decode";
+import axiosInstance from "../../utils/axiosInstance";
 import {
   Box,
   Button,
@@ -18,29 +18,26 @@ import {
   OutlinedInput,
   Stack,
   Typography,
-  useMediaQuery
-} from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import * as Yup from 'yup';
-import { Formik } from 'formik';
-import { useNavigate } from 'react-router-dom';
-import AnimateButton from '../../components/AnimateButton'; 
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Google from '../../assets/images/social-google.svg';
-
-
+  useMediaQuery,
+} from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+import * as Yup from "yup";
+import { Formik } from "formik";
+import { useNavigate } from "react-router-dom";
+import AnimateButton from "../../components/AnimateButton";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Google from "../../assets/images/social-google.svg";
 
 const Login = ({ ...others }) => {
-  
   const theme = useTheme();
-  const matchDownSM = useMediaQuery(theme.breakpoints.down('md'));
+  const matchDownSM = useMediaQuery(theme.breakpoints.down("md"));
   const navigate = useNavigate();
   const [checked, setChecked] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
-  
+
   const googleHandler = async () => {
-    console.error('Login with Google');
+    console.error("Login with Google");
     // Implement Google authentication logic here
   };
 
@@ -51,12 +48,12 @@ const Login = ({ ...others }) => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
   };
-  console.log('process.env.NODE_ENV', process.env.NODE_ENV);
-  var address = 'https://crypto-trading-bot-sa5d.onrender.com/api/auth/login';
-  if (process.env.NODE_ENV === 'development') {
-    address = 'http://localhost:5000/api/auth/login';
+  console.log("process.env.NODE_ENV", process.env.NODE_ENV);
+  var address = "https://crypto-trading-bot-sa5d.onrender.com/api/auth/login";
+  if (process.env.NODE_ENV === "development") {
+    address = "http://localhost:5000/api/auth/login";
   }
-  console.log('address', address);
+  console.log("address", address);
   // Ensure essential environment variables are set
   return (
     <>
@@ -70,10 +67,10 @@ const Login = ({ ...others }) => {
               size="Large"
               variant="outlined"
               sx={{
-                color: '#ffffff',
-                backgroundColor: '#000000',
+                color: "#ffffff",
+                backgroundColor: "#000000",
                 borderColor: theme.palette.grey[100],
-                '&:hover': {
+                "&:hover": {
                   backgroundColor: theme.palette.grey[100],
                 },
               }}
@@ -93,12 +90,12 @@ const Login = ({ ...others }) => {
         </Grid>
 
         <Grid item xs={12}>
-          <Box sx={{ alignItems: 'center', display: 'flex' }}>
+          <Box sx={{ alignItems: "center", display: "flex" }}>
             <Divider sx={{ flexGrow: 1 }} orientation="horizontal" />
             <Button
               variant="outlined"
               sx={{
-                cursor: 'unset',
+                cursor: "unset",
                 m: 2,
                 py: 0.5,
                 px: 7,
@@ -117,65 +114,73 @@ const Login = ({ ...others }) => {
           </Box>
         </Grid>
 
-        <Grid item xs={12} container alignItems="center" justifyContent="center">
+        <Grid
+          item
+          xs={12}
+          container
+          alignItems="center"
+          justifyContent="center"
+        >
           <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle1">Sign in with Email Address</Typography>
+            <Typography variant="subtitle1">
+              Sign in with Email Address
+            </Typography>
           </Box>
         </Grid>
       </Grid>
 
       <Formik
         initialValues={{
-          email: '',
-          password: '',
+          email: "",
+          password: "",
           submit: null,
         }}
         validationSchema={Yup.object().shape({
           email: Yup.string()
-            .email('Must be a valid email')
+            .email("Must be a valid email")
             .max(255)
-            .required('Email is required'),
-          password: Yup.string()
-            .max(255)
-            .required('Password is required'),
+            .required("Email is required"),
+          password: Yup.string().max(255).required("Password is required"),
         })}
-        
         onSubmit={async (values, { setErrors, setStatus, setSubmitting }) => {
           try {
             // Implement form submission logic here (e.g., authenticate user)
             // 1) Send login request
             console.log(address);
-            
+
             const response = await axiosInstance.post(address, {
-                email: values.email,
-                password: values.password,
-                headers: {
-                    'Content-Type': 'application/json'
-                  }
-                });
-                console.log('Login successful:', response.data);
-              
+              email: values.email,
+              password: values.password,
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            console.log("Login successful:", response.data);
+
             // 2) Suppose the server returns { accessToken, refreshToken }
-            const { accessToken, refreshToken } = response.data;  
-            console.log('1');
-             // 3) Store tokens (localStorage or cookies)
-             localStorage.setItem('accessToken', accessToken);
-             localStorage.setItem('refreshToken', refreshToken);
-              console.log('2');
-             // decode the JWT to get user info
-            const decoded = jwtDecode(accessToken); 
-            console.log('3');
+            const { accessToken, refreshToken } = response.data;
+            if (response.data.expiresIn) {
+              scheduleTokenRefresh(response.data.expiresIn);
+            }
+            console.log("1");
+            // 3) Store tokens (localStorage or cookies)
+            //localStorage.setItem('accessToken', accessToken);
+            //localStorage.setItem('refreshToken', refreshToken);
+            console.log("2");
+            // decode the JWT to get user info
+            const decoded = jwtDecode(accessToken);
+            console.log("3");
             // e.g. { sub: "123", email: "alice@example.com", iat: ..., exp: ... }
             const userId = decoded.user.id;
             console.log(decoded);
-            console.log('User ID:', userId);
-            console.log('4');
-             // 4) Mark success, stop loading
-             setStatus({ success: true });
-             setSubmitting(false);
-              console.log('5'); 
-             // 5) Redirect to the dashboard
-             navigate(`/dashboard/${userId}`);;
+            console.log("User ID:", userId);
+            console.log("4");
+            // 4) Mark success, stop loading
+            setStatus({ success: true });
+            setSubmitting(false);
+            console.log("5");
+            // 5) Redirect to the dashboard
+            navigate(`/dashboard/${userId}`);
           } catch (err) {
             console.error(err);
             setStatus({ success: false });
@@ -213,7 +218,10 @@ const Login = ({ ...others }) => {
                 inputProps={{}}
               />
               {touched.email && errors.email && (
-                <FormHelperText error id="standard-weight-helper-text-email-login">
+                <FormHelperText
+                  error
+                  id="standard-weight-helper-text-email-login"
+                >
                   {errors.email}
                 </FormHelperText>
               )}
@@ -229,7 +237,7 @@ const Login = ({ ...others }) => {
               </InputLabel>
               <OutlinedInput
                 id="outlined-adornment-password-login"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 value={values.password}
                 name="password"
                 onBlur={handleBlur}
@@ -251,7 +259,10 @@ const Login = ({ ...others }) => {
                 inputProps={{}}
               />
               {touched.password && errors.password && (
-                <FormHelperText error id="standard-weight-helper-text-password-login">
+                <FormHelperText
+                  error
+                  id="standard-weight-helper-text-password-login"
+                >
                   {errors.password}
                 </FormHelperText>
               )}
@@ -278,10 +289,10 @@ const Login = ({ ...others }) => {
               <Typography
                 variant="subtitle1"
                 color="secondary"
-                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                sx={{ textDecoration: "none", cursor: "pointer" }}
                 onClick={() => {
                   // Implement forgot password logic or navigation here
-                  console.log('Forgot Password Clicked');
+                  console.log("Forgot Password Clicked");
                 }}
               >
                 Forgot Password?
@@ -305,21 +316,21 @@ const Login = ({ ...others }) => {
                   variant="contained"
                   color="secondary"
                   sx={{
-                    textTransform: 'none',
+                    textTransform: "none",
                   }}
                 >
-                  {isSubmitting ? 'Signing in...' : 'Sign in'}
+                  {isSubmitting ? "Signing in..." : "Sign in"}
                 </Button>
               </AnimateButton>
               <Typography
-              position={'center'}
+                position={"center"}
                 variant="subtitle1"
                 color="secondary"
-                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                sx={{ textDecoration: "none", cursor: "pointer" }}
                 onClick={() => {
-                  navigate('/form');
+                  navigate("/form");
                   // Implement forgot password logic or navigation here
-                  console.log('sign up Clicked');
+                  console.log("sign up Clicked");
                 }}
               >
                 Don't have an account?

@@ -128,19 +128,24 @@ router.post(
         expiresAt: expiry,
       });
 
-      // Set the access token in an HttpOnly cookie
       res.cookie("token", accessToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.NODE_ENV === "production", // only send over HTTPS in production
         sameSite: "strict",
         maxAge: 15 * 60 * 1000, // 15 minutes in ms
       });
 
-      // Return plaintext refresh token (only once!)
+      res.cookie("refreshToken", rawRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // e.g. 7 days
+      });
+
+      // Return minimal JSON (no tokens)
       res.json({
         message: "Logged in successfully",
-        accessToken,
-        refreshToken: rawRefresh,
+        expiresIn: 15 * 60, // optional, if you want the client to know the access token expiry in seconds
       });
     } catch (error) {
       console.log(error);
@@ -159,8 +164,7 @@ router.get("/verify", async (req, res, next) => {
     console.log("Environment:", process.env.NODE_ENV);
     console.log("Headers:", req.headers);
     console.log("Cookies:", req.cookies);
-    const token =
-      req.cookies.token || req.headers["authorization"]?.split(" ")[1];
+    const token = req.cookies.token;
     console.log("Extracted Token:", token);
     next();
     console.log("Token:", token); // Debugging
@@ -185,7 +189,7 @@ router.get("/verify", async (req, res, next) => {
 // ============== REFRESH TOKEN ROUTE ==============
 router.post("/refresh-token", async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
       throw new CustomError("Refresh token is required", 400);
