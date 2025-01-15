@@ -157,23 +157,23 @@ const Login = ({ ...others }) => {
               
             // 2) Suppose the server returns { accessToken, refreshToken }
             const { accessToken, refreshToken } = response.data;  
-
+            console.log('1');
              // 3) Store tokens (localStorage or cookies)
              localStorage.setItem('accessToken', accessToken);
              localStorage.setItem('refreshToken', refreshToken);
-
+              console.log('2');
              // decode the JWT to get user info
             const decoded = jwtDecode(accessToken); 
-
+            console.log('3');
             // e.g. { sub: "123", email: "alice@example.com", iat: ..., exp: ... }
             const userId = decoded.user.id;
             console.log(decoded);
             console.log('User ID:', userId);
-              
+            console.log('4');
              // 4) Mark success, stop loading
              setStatus({ success: true });
              setSubmitting(false);
- 
+              console.log('5'); 
              // 5) Redirect to the dashboard
              navigate(`/dashboard/${userId}`);;
           } catch (err) {
