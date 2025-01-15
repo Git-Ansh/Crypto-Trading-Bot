@@ -1,5 +1,5 @@
 // src/routes/ProtectedRoute.jsx
-
+console.log("ProtectedRoute rendering. Checking token...");
 import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
@@ -14,6 +14,7 @@ const ProtectedRoute = () => {
         await axiosInstance.get('/auth/verify', {headers: { Authorization: `Bearer ${accessToken}`}}, { withCredentials: true }); // Implement this endpoint on the backend
         setIsAuthenticated(true);
       } catch (error) {
+        console.error(error);
         setIsAuthenticated(false);
       }
     };
