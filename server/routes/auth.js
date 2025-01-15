@@ -242,7 +242,10 @@ router.post("/refresh-token", async (req, res, next) => {
       encryptedToken: newEncryptedRefresh,
       expiresAt: newExpiry,
     });
-    await RefreshToken.deleteOne({ _id: storedToken._id });
+    await RefreshToken.deleteMany({
+      userId: user._id,
+      expiresAt: { $lt: new Date() },
+    });
 
     // Send the new tokens to the client
     res.cookie("refreshToken", newRefreshString, {
