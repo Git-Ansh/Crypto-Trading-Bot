@@ -162,25 +162,24 @@ const Login = ({ ...others }) => {
             if (response.data.expiresIn) {
               scheduleTokenRefresh(response.data.expiresIn);
             }
-            console.log("1");
-            // 3) Store tokens (localStorage or cookies)
-            //localStorage.setItem('accessToken', accessToken);
-            //localStorage.setItem('refreshToken', refreshToken);
+
             console.log("2");
-            // decode the JWT to get user info
-            const decoded = jwtDecode(accessToken);
-            console.log("3");
-            // e.g. { sub: "123", email: "alice@example.com", iat: ..., exp: ... }
-            const userId = decoded.user.id;
-            console.log(decoded);
-            console.log("User ID:", userId);
+
+            // const decoded = jwtDecode(accessToken);
+            // console.log("3");
+            // const userId = decoded.user.id;
+            // console.log(decoded);
+            // console.log("User ID:", userId);
+
+            const verifyResponse = await axiosInstance.get("/auth/verify");
+            console.log("User info from verify:", verifyResponse.data.user);
             console.log("4");
             // 4) Mark success, stop loading
             setStatus({ success: true });
             setSubmitting(false);
             console.log("5");
             // 5) Redirect to the dashboard
-            navigate(`/dashboard/${userId}`);
+            navigate(`/dashboard/${verifyResponse.data.user.id}`);
           } catch (err) {
             console.error(err);
             setStatus({ success: false });
