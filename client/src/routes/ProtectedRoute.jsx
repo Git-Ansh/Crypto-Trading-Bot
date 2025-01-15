@@ -11,7 +11,7 @@ const ProtectedRoute = () => {
     const verifyToken = async () => {
       try {
         // Call a protected endpoint to verify authentication
-        await axiosInstance.get('/auth/verify'); // Implement this endpoint on the backend
+        await axiosInstance.get('/auth/verify', {headers: { Authorization: `Bearer ${accessToken}`}}, { withCredentials: true }); // Implement this endpoint on the backend
         setIsAuthenticated(true);
       } catch (error) {
         setIsAuthenticated(false);
