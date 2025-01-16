@@ -14,7 +14,7 @@ const Login = () => {
   const address =
     process.env.NODE_ENV === "development"
       ? "http://localhost:5000/api/auth/login"
-      : "https://crypto-trading-bot-sa5d.onrender.com/api/auth/login";
+      : "https://api.crypto-pilot.dev/api/auth/login";
   // Check if the user is already logged in
   useEffect(() => {
     const checkLoginStatus = async () => {

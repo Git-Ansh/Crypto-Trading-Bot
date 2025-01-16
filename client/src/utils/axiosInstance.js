@@ -1,6 +1,6 @@
 import axios from "axios";
 import { scheduleTokenRefresh } from "./tokenService";
-let address = "https://crypto-trading-bot-sa5d.onrender.com/api/";
+let address = "https://api.crypto-pilot.dev/api/";
 if (process.env.NODE_ENV === "development") {
   address = "http://localhost:5000/api/";
 }
