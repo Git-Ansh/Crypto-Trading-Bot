@@ -1,5 +1,5 @@
 // server/middleware/errorHandler.js
-const CustomError = require('../utils/CustomError');
+const CustomError = require("../utils/CustomError");
 
 /**
  * Centralized error handling middleware.
@@ -8,17 +8,19 @@ const CustomError = require('../utils/CustomError');
  * @param {Object} res - Express response object.
  * @param {Function} next - Express next middleware function.
  */
+// errorHandler.js
 const errorHandler = (err, req, res, next) => {
-  // If the error is not a CustomError, convert it to one
-  if (!(err instanceof CustomError)) {
-    err = new CustomError('Internal Server Error', 500);
+  if (err instanceof CustomError) {
+    return res.status(err.statusCode).json({
+      success: false,
+      message: err.message,
+    });
   }
 
-  // Send the error response
-  res.status(err.statusCode).json({
+  // Fallback
+  res.status(500).json({
     success: false,
-    message: err.message,
+    message: "Server Error",
   });
 };
-
 module.exports = errorHandler;

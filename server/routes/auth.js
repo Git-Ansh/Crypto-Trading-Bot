@@ -104,7 +104,7 @@ router.post(
         throw new CustomError("Invalid credentials", 400);
       }
 
-      // Invalidate existing refresh tokens for the user
+      // Delete expired refresh tokens
       await RefreshToken.deleteMany({
         userId: user._id,
         expiresAt: { $lt: new Date() },
@@ -163,20 +163,23 @@ router.post(
   }
 );
 
-// ============== VERIFY TOKEN ROUTE ==============
 router.get("/verify", async (req, res, next) => {
   try {
     console.log("Environment:", process.env.NODE_ENV);
     console.log("Headers:", req.headers);
     console.log("Cookies:", req.cookies);
+
+    // Extract the access token from cookies
     const token = req.cookies.token;
     console.log("Extracted Token:", token);
-    console.log("Token:", token); // Debugging
+
     if (!token) {
       throw new CustomError("No token provided", 401);
     }
 
+    // Verify the access token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log("Decoded Token:", decoded);
 
     res.json({ message: "Token is valid", user: decoded.user });
   } catch (error) {
