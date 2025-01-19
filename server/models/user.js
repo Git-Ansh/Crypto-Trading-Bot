@@ -11,6 +11,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
+    lowercase: true,
     match: [/\S+@\S+\.\S+/, 'is invalid'],
   },
   password: {

@@ -93,7 +93,11 @@ router.post(
       const { email, password } = req.body;
 
       // Check if user exists
-      const user = await User.findOne({ email });
+
+      const userEmail = email.toLowerCase();
+      console.log("User Email:", userEmail);
+      const user = await User.findOne({ email: userEmail });
+      console.log("User:", user);
       if (!user) {
         throw new CustomError("Invalid credentials", 400);
       }

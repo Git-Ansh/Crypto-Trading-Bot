@@ -7,66 +7,53 @@ import axiosInstance from "../../utils/axiosInstance";
 import SocialLogin from "../../components/SocialLogin";
 import InputField from "../../components/InputField";
 
-const Login = () => {
+const SignUp = () => {
   const navigate = useNavigate();
-  const [userId, setName] = useState("");
+  const [username, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Check if the user is already logged in
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const verifyResponse = await axiosInstance.get("/auth/verify");
-        console.log("User is already logged in:", verifyResponse.data.user);
-        // Redirect to the dashboard if authenticated
-        navigate(`/dashboard/${verifyResponse.data.user.id}`);
-      } catch (error) {
-        console.log("User is not logged in, proceeding to login.");
-      }
-    };
-
-    checkLoginStatus();
-  }, [navigate]);
 
   const handleSubmit = async (event) => {
     event.preventDefault(); // Prevent the form from reloading the page
     try {
-      console.log("Sending login request...");
-      const response = await axiosInstance.post("/auth/login", {
+      console.log("Signing Up...");
+      const response = await axiosInstance.post("/auth/register", {
+        username,
         email,
         password,
         headers: {
           "Content-Type": "application/json",
         },
       });
-      console.log("Login successful:", response.data);
+      console.log("Sign-Up successful:", response.data);
+      alert("Sign-up successful. Please log in to continue.");
+      navigate(`/`);
 
-      // Verify the token after login
-      const verifyResponse = await axiosInstance.get("/auth/verify");
-      console.log("User info from verify:", verifyResponse.data.user);
-
-      // Redirect to the dashboard
-      navigate(`/dashboard/${verifyResponse.data.user.id}`);
     } catch (err) {
-      console.error("Error during login process:", err);
-      alert("Login failed. Please check your credentials and try again.");
-    }
+      if(err.response.status === 400) {
+      alert("User already exists. Please log in.");
+      navigate(`/`);
+      }
+      else{
+      console.error("Error during Sign-up process:", err);
+      alert("Sign-up failed. Please check your credentials and try again.");
+    }}
   };
 
   return (
     <div className="login-container">
-      <h2 className="form-title">Log in with</h2>
+      <script src="https://apis.google.com/js/platform.js" async defer></script>
+      <h2 className="form-title"> Continue with</h2>
       <SocialLogin />
       <p className="separator">
         <span>or</span>
       </p>
       <form className="login-form" onSubmit={handleSubmit}>
         <InputField
-          type="userId"
+          type="username"
           placeholder="User Name"
           icon={<Name />}
-          value={email}
+          value={username}
           onChange={(e) => setName(e.target.value)}
         />
         <InputField
@@ -83,21 +70,18 @@ const Login = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <a href="#" className="forgot-password-link">
-          Forgot password?
-        </a>
         <button type="submit" className="login-button">
-          Log In
+          Sign Up
         </button>
       </form>
       <p className="signup-prompt">
-        Don&apos;t have an account?{" "}
-        <a href="/form" className="signup-link">
-          Sign up
+        Already have an account?{" "}
+        <a href="/" className="signup-link">
+          Log In
         </a>
       </p>
     </div>
   );
 };
 
-export default Login;
+export default SignUp;

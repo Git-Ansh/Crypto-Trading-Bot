@@ -13,9 +13,11 @@ import Stream from "./stream";
 import FAQ from "./faq";
 import Geography from "./geography";
 import Login from "./login";
+import SignUP from "./form";
 // import axiosInstance from "../utils/axiosInstance";
 export {
   // axiosInstance,
+  SignUP,
   Navbar,
   SideBar,
   Dashboard,
