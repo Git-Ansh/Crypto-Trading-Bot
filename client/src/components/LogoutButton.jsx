@@ -3,7 +3,8 @@
 import React from 'react';
 import axiosInstance from '../utils/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import { blue, lightBlue } from '@mui/material/colors';
+import { Button } from '@mui/material';
+import { LogoutOutlined } from '@mui/icons-material';
 
 const LogoutButton = () => {
   const navigate = useNavigate();
@@ -19,20 +20,32 @@ const LogoutButton = () => {
     }
   };
 
-  return <button variant="contained"
-  sx={{
-    bgcolor: blue,
-    color: "#fcfcfc",
-    fontSize: "10px",
-    fontWeight: "bold",
-    p: "10px 20px",
-    mt: "18px",
-    transition: ".3s ease",
-    ":hover": {
-      bgcolor: lightBlue,
-    },
-  }}
-   onClick={handleLogout}>logout</button>;
+  return (
+    <Button
+      variant="contained"
+      onClick={handleLogout}
+      startIcon={<LogoutOutlined />}
+      sx={{
+        backgroundColor: '#2196f3',
+        color: '#ffffff',
+        fontSize: "14px",
+        fontWeight: "600",
+        padding: "8px 16px",
+        borderRadius: "8px",
+        textTransform: "none",
+        boxShadow: '0 2px 4px rgba(33, 150, 243, 0.25)',
+        '&:hover': {
+          backgroundColor: '#1976d2',
+          boxShadow: '0 4px 8px rgba(33, 150, 243, 0.3)',
+        },
+        '&:active': {
+          backgroundColor: '#1565c0',
+        }
+      }}
+    >
+      Logout
+    </Button>
+  );
 };
 
 export default LogoutButton;

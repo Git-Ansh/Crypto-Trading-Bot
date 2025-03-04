@@ -2,7 +2,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { ColorModeContext, useMode } from "./theme";
-import { Navbar, SideBar } from "./scenes";
 import { Outlet } from "react-router-dom";
 import { scheduleTokenRefresh, clearTokenRefresh } from './utils/tokenService';
 

@@ -13,7 +13,7 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #5F41E4;
+  background: #fffffe;
 }
 #root {
   width: 100%;
@@ -48,13 +48,13 @@ body {
   border-radius: 0.31rem;
   align-items: center;
   justify-content: center;
-  background: #F9F8FF;
-  border: 1px solid #D5CBFF;
+  background: #ffffff;
+  border: 1px solid #000000;
   transition: 0.3s ease;
 }
 .social-login .social-button:hover {
-  border-color: #5F41E4;
-  background: #f1eff9;
+  border-color: #006067;
+  background: #00bbff;
 }
 .social-login .social-button .social-icon {
   width: 23px;
@@ -81,7 +81,7 @@ body {
 .login-container .separator span {
   z-index: 1;
   font-weight: 500;
-  color: #6652BE;
+  color: #ffffff;
   position: relative;
   background: #fff;
   font-size: 1.06rem;
@@ -94,7 +94,7 @@ body {
   top: 50%;
   height: 1px;
   width: 100%;
-  background: #bfb3f2;
+  background: #00bbff;
 }
 .login-form .input-wrapper {
   height: 54px;
@@ -108,22 +108,22 @@ body {
   outline: none;
   font-size: 1.06rem;
   border-radius: 0.31rem;
-  border: 1px solid #bfb3f2;
+  border: 1px solid #000000;
   padding: 0px 1.25rem 0 3.12rem;
   transition: 0.2s ease;
 }
 .login-form .input-field:focus {
-  border-color: #5F41E4;
+  border-color: #25e7fd;
 }
 .login-form .input-field::placeholder {
-  color: #9284c8;
+  color: #000000;
 }
 .login-form .input-wrapper i {
   position: absolute;
   top: 50%;
   height: 100%;
   display: flex;
-  color: #a395e0;
+  color: #00bbff;
   align-items: center;
   transform: translateY(-50%);
   transition: 0.2s ease;
@@ -133,12 +133,12 @@ body {
   pointer-events: none;
 }
 .login-form .input-field:focus ~ i:not(.eye-icon) {
-  color: #5F41E4;
+  color: #00bbff;
 }
 .login-form .input-wrapper i.eye-icon {
   display: none;
   right: 0.93rem;
-  color: #917DE8;
+  color: #00bbff;
   cursor: pointer;
   font-size: 1.25rem;
 }
@@ -161,11 +161,11 @@ body {
   cursor: pointer;
   margin-top: 2.19rem;
   border-radius: 0.31rem;
-  background: #5F41E4;
+  background: #000000;
   transition: 0.3s ease;
 }
 .login-form .login-button:hover {
-  background: #4320df;
+  background: #00bbff;
 }
 .login-container .signup-prompt {
   text-align: center;
@@ -174,7 +174,7 @@ body {
   margin: 1.75rem 0 0.31rem;
 }
 .login-container a {
-  color: #5F41E4;
+  color: #00bbff;
   font-weight: 500;
   text-decoration: none;
 }
